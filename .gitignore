@@ -1,0 +1,43 @@
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Swift Package Manager
+.build/
+Packages/
+Package.pins
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.xcuserstate
+
+# SwiftPM Local State
+.swiftpm/
+
+# Build Artifacts & Application Bundles
+*.app
+*.dSYM
+*.dmg
+*.pkg
+*.ipa
+*.iconset/
+build/
+dist/
+
+# Credentials & Secrets
+.netrc
+.env
+.env.*
+*.keychain
+
+# Development & AI Audit Logs
+anti-slop/
