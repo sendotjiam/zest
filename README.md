@@ -12,29 +12,41 @@
 [![macOS 14.0+](https://img.shields.io/badge/macOS-14.0%2B-000000?style=flat-square&logo=apple&logoColor=white)](https://apple.com/macos)
 [![RAM Footprint](https://img.shields.io/badge/RAM-%3C20MB-34D399?style=flat-square)](#why-zest)
 [![CPU Usage](https://img.shields.io/badge/CPU-0.001%25-34D399?style=flat-square)](#behind-the-scenes-architecture)
-[![Tests Passing](https://img.shields.io/badge/Tests-40%2F40%20Passing-34D399?style=flat-square)](Tests/ZestTests)
+[![Tests Passing](https://img.shields.io/badge/Tests-41%2F41%20Passing-34D399?style=flat-square)](Tests/ZestTests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Zero Telemetry](https://img.shields.io/badge/Privacy-100%25%20On--Device-F59E0B?style=flat-square)](#-zero-compromise-privacy)
 
 <br/>
 
 ```text
- ┌── Zest ────────────────────────────────────────────── ⚡ ──┐
- │ 🔍 Type to fuzzy search or tap 1-9, 0...                 │
+ ╭──────────────────────────────────────────────────────────╮
+ │ 🔍 Type to search or tap 1-9, 0...             [⚡ ZEST] │
  ├──────────────────────────────────────────────────────────┤
  │ PINNED (⌥1–⌥9)                                           │
  │ [⌥1] [CODE] export DATABASE_URL="postgres://..." [📌] [✕] │
  │ RECENT                                                   │
- │ [1]  [JSON] { "status": 200, "user": "alice" }   [⇥]  [✕] │
- │ [2]  [SQL]  SELECT id, email FROM accounts...    [⇥]  [✕] │
- │ [3]  [TS]   interface UserConfig { port: 8080 }  [⇥]  [✕] │
- │ [4]  [URL]  https://api.github.com/v1/repos...   [⇥]  [✕] │
+ │▌[1]  [JSON] { "status": 200, "user": "alice" }   [⊶]  [✕] │
+ │ [2]  [SQL]  SELECT id, email FROM accounts...         98B │
+ │ [3]  [TS]   interface UserConfig { port: 8080 }       88B │
+ │ [4]  [URL]  https://api.github.com/v1/repos...        34B │
  ├──────────────────────────────────────────────────────────┤
- │ Tap 1–10 to paste  •  Clear All        ?    ⚙    🚪 Quit │
- └──────────────────────────────────────────────────────────┘
+ │ Tap 1–10 to paste  •  Clear All        ◐   ⊞   ?   ⚙   ⏻ │
+ ╰──────────────────────────────────────────────────────────╯
 ```
 
 </div>
+
+---
+
+## 🎬 See Zest in Action (25s Walkthrough)
+
+<div align="center">
+  <video src="assets/zest-promo.mp4" controls playsinline muted width="100%">
+    Watch the <a href="assets/zest-promo.mp4">25-second Zest walkthrough video</a>.
+  </video>
+</div>
+
+> ▶️ **[Watch `assets/zest-promo.mp4` (25s Walkthrough)](assets/zest-promo.mp4)** — Copy items in Safari, summon Zest with `⌘⇧V`, paste in 1 tap (`1`, `2`, `3`) without losing active cursor focus, and snip text from images with Vision OCR (`⌘⇧2`).
 
 ---
 
@@ -143,6 +155,10 @@ Select any clip and tap **`Tab`** to toggle the built-in pure Swift transformati
 - **On-Device Vision Intelligence**: Processes the captured area using Apple's native `Vision` framework (`VNRecognizeTextRequest`) in sub-milliseconds on the Apple Neural Engine with zero external dependencies.
 - **Instant Ingestion**: Extracted text is instantly copied to the system clipboard, ingested into Zest's history for 1-tap pasting and data transformations, and confirmed with an audio chime.
 
+### 11. 🍊 Warm Citrus Liquid Glass HUD (`Auto` / `Light` / `Dark`)
+- **Signature Orange Telemetry**: Built with Zest's citrus palette (`#FF6B00` → `#EA580C`) across a subtle top ambient bloom, warm glass rim border, active search ring with `⚡ ZEST` badge, and a 2.5pt left orange selection rail for instant keyboard tracking.
+- **Instant Theme Cycling (`◐`)**: Toggle between **Auto**, **Light**, and **Dark** HUD appearances right from the footer bar.
+
 ---
 
 ## 🔬 Behind-the-Scenes Architecture
@@ -202,6 +218,8 @@ sequenceDiagram
 | **`Tab` (`⇥`)** | Inside HUD | Open Transform Deck (JSON, Case, Base64, etc.) |
 | **`?`** | Inside HUD | Open in-app User Guide & Cheatsheet |
 | **`⌘,`** | Global / HUD | Open Preferences window |
+| **`◐` Button** | Footer | Cycle HUD theme (`Auto` / `Light` / `Dark`) |
+| **`⊞` Button** | Footer | Capture screen area & recognize text (Vision OCR) |
 | **`✕` Button** | Row Hover | Delete single clip from history |
 | **Pin Icon (`📌`)** | Row Hover | Pin / Unpin snippet permanently |
 | **Right-Click** | Row | Native context menu (Paste, Plain Text, Copy, Delete) |
@@ -275,7 +293,7 @@ swift test
 ✔ Test "HistoryStorageManager JSON Serialization and Loading" passed (0.008s)
 ✔ Test "Ephemeral RAM-Only Mode Disables Disk Writes" passed (0.008s)
 ✔ Test "Search Filtering and Filtered Items Synchronization" passed (0.008s)
-✔ Test run with 40 tests in 14 suites passed after 0.374 seconds.
+✔ Test run with 41 tests in 14 suites passed after 0.380 seconds.
 ```
 
 ---

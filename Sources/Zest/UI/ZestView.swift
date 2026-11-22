@@ -52,6 +52,36 @@ public extension Notification.Name {
     static let themeDidChange = Notification.Name("app.zest.themeDidChange")
 }
 
+// MARK: - Zest Brand Palette
+public enum ZestPalette {
+    /// Electric Tang (#FF6B00) — primary brand accent, active focus, and rail highlights
+    public static let tang = Color(red: 1.0, green: 0.42, blue: 0.0)
+    /// Warm Orange (#FF7A18) — top gradient stop for solid CTAs and active pills
+    public static let warmOrange = Color(red: 1.0, green: 0.478, blue: 0.094)
+    /// Burnt Orange (#EA580C) — bottom gradient stop for >= 4.5:1 white text legibility
+    public static let burntOrange = Color(red: 0.918, green: 0.345, blue: 0.047)
+    /// Citrus Glow (#FF8A00) — subtle HUD top rim and ambient bloom
+    public static let citrusGlow = Color(red: 1.0, green: 0.541, blue: 0.0)
+    /// Golden Amber (#F59E0B) — pinned section headers and warm secondary highlights
+    public static let amber = Color(red: 0.961, green: 0.620, blue: 0.043)
+
+    public static var ctaGradient: LinearGradient {
+        LinearGradient(
+            colors: [warmOrange, burntOrange],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+
+    public static var activeRowWash: LinearGradient {
+        LinearGradient(
+            colors: [tang.opacity(0.16), amber.opacity(0.06)],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
+}
+
 // MARK: - Visual Effect View
 public struct VisualEffectView: NSViewRepresentable {
     public let material: NSVisualEffectView.Material
@@ -92,6 +122,7 @@ public struct ZestView: View {
     @AppStorage("zest_theme") private var themeRawValue: String = AppTheme.system.rawValue
     @AppStorage("zest_showShortcuts") private var showShortcuts: Bool = true
     @State private var hasAccessibility: Bool = PasteEngine.hasAccessibilityPermission
+    @FocusState private var isSearchFocused: Bool
 
     public var onDismiss: () -> Void
 
@@ -114,38 +145,50 @@ public struct ZestView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            // Liquid Glass Search Header
-            searchHeader
-                .padding(.horizontal, 10)
-                .padding(.top, 10)
-                .padding(.bottom, 8)
+        ZStack(alignment: .top) {
+            // Subtle top citrus ambient bloom matching Zest brand glow
+            RadialGradient(
+                colors: [ZestPalette.citrusGlow.opacity(0.16), ZestPalette.citrusGlow.opacity(0.03), .clear],
+                center: .top,
+                startRadius: 12,
+                endRadius: 210
+            )
+            .frame(height: 120)
+            .allowsHitTesting(false)
 
-            if !hasAccessibility {
-                accessibilityBanner
-            }
+            VStack(spacing: 0) {
+                // Liquid Glass Search Header
+                searchHeader
+                    .padding(.horizontal, 10)
+                    .padding(.top, 10)
+                    .padding(.bottom, 8)
 
-            // Glass Light Refraction Line
-            glassDivider
-
-            // Main Content Area
-            if let item = state.selectedItem {
-                if item.isImage {
-                    imageDetailDeck(for: item)
-                } else {
-                    transformDeck(for: item)
+                if !hasAccessibility {
+                    accessibilityBanner
                 }
-            } else if let preview = state.previewItem {
-                quickLookDeck(for: preview)
-            } else {
-                clipList
+
+                // Glass Light Refraction Line
+                glassDivider
+
+                // Main Content Area
+                if let item = state.selectedItem {
+                    if item.isImage {
+                        imageDetailDeck(for: item)
+                    } else {
+                        transformDeck(for: item)
+                    }
+                } else if let preview = state.previewItem {
+                    quickLookDeck(for: preview)
+                } else {
+                    clipList
+                }
+
+                // Glass Light Refraction Line
+                glassDivider
+
+                // Liquid Glass Footer
+                footerBar
             }
-
-            // Glass Light Refraction Line
-            glassDivider
-
-            // Liquid Glass Footer
-            footerBar
         }
         .frame(width: 390)
         .frame(minHeight: 160, maxHeight: 380)
@@ -156,7 +199,14 @@ public struct ZestView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [ZestPalette.citrusGlow.opacity(0.36), Color.primary.opacity(0.12)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 1
+                )
         )
         .onAppear {
             hasAccessibility = PasteEngine.hasAccessibilityPermission
@@ -168,15 +218,18 @@ public struct ZestView: View {
 
     // MARK: - Molded Glass Search Bar
     private var searchHeader: some View {
-        HStack(spacing: 8) {
+        let isSearchActive = isSearchFocused || !state.searchText.isEmpty
+
+        return HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
-                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(ZestPalette.tang)
+                .font(.system(size: 13, weight: .semibold))
 
             TextField(l10n.tr(.searchPlaceholder), text: $state.searchText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12, weight: .regular))
                 .foregroundColor(.primary)
+                .focused($isSearchFocused)
 
             if !state.searchText.isEmpty {
                 Button(action: { state.searchText = "" }) {
@@ -185,6 +238,22 @@ public struct ZestView: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
+            } else {
+                HStack(spacing: 2.5) {
+                    Image(systemName: "bolt.fill")
+                        .font(.system(size: 8.5, weight: .bold))
+                    Text("ZEST")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .tracking(0.4)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2.5)
+                .background(
+                    RoundedRectangle(cornerRadius: 5, style: .continuous)
+                        .fill(ZestPalette.ctaGradient)
+                )
+                .accessibilityHidden(true)
             }
         }
         .padding(.horizontal, 10)
@@ -195,8 +264,12 @@ public struct ZestView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.75)
+                .strokeBorder(
+                    ZestPalette.tang.opacity(isSearchActive ? 0.60 : 0.30),
+                    lineWidth: isSearchActive ? 1.0 : 0.75
+                )
         )
+        .shadow(color: isSearchActive ? ZestPalette.tang.opacity(0.18) : .clear, radius: 5, y: 0)
     }
 
     // MARK: - Accessibility Warning Banner
@@ -266,7 +339,7 @@ public struct ZestView: View {
                             let recent = engine.items.filter { !$0.isPinned }
 
                             if !pinned.isEmpty {
-                                sectionHeader(title: l10n.tr(.pinnedSection))
+                                sectionHeader(title: l10n.tr(.pinnedSection), isAccent: true)
                                 ForEach(Array(pinned.enumerated()), id: \.element.id) { index, item in
                                     LiquidClipRow(
                                         item: item,
@@ -369,11 +442,11 @@ public struct ZestView: View {
         }
     }
 
-    private func sectionHeader(title: String) -> some View {
+    private func sectionHeader(title: String, isAccent: Bool = false) -> some View {
         HStack {
             Text(title)
                 .font(.system(size: 9, weight: .bold))
-                .foregroundColor(.secondary.opacity(0.8))
+                .foregroundColor(isAccent ? ZestPalette.amber : .secondary.opacity(0.8))
                 .padding(.horizontal, 6)
                 .padding(.top, 4)
                 .padding(.bottom, 2)
@@ -404,20 +477,21 @@ public struct ZestView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(actions) { action in
+                        let isActive = state.activeTransform?.id == action.id
                         Button(action: { applyTransform(action, to: item) }) {
                             Text(action.name)
                                 .font(.system(size: 11, weight: .medium))
-                                .foregroundColor(state.activeTransform?.id == action.id ? .white : .primary)
+                                .foregroundColor(isActive ? .white : .primary)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
                                 .background(
                                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .fill(state.activeTransform?.id == action.id ? Color.accentColor : Color.primary.opacity(0.08))
+                                        .fill(isActive ? AnyShapeStyle(ZestPalette.ctaGradient) : AnyShapeStyle(Color.primary.opacity(0.08)))
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                                         .strokeBorder(
-                                            state.activeTransform?.id == action.id ? Color.white.opacity(0.4) : Color.primary.opacity(0.12),
+                                            isActive ? Color.white.opacity(0.4) : Color.primary.opacity(0.12),
                                             lineWidth: 0.75
                                         )
                                 )
@@ -460,7 +534,7 @@ public struct ZestView: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.75)
+                    .strokeBorder(ZestPalette.citrusGlow.opacity(0.24), lineWidth: 0.75)
             )
             .padding(.horizontal, 10)
 
@@ -523,16 +597,7 @@ public struct ZestView: View {
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 0.98, green: 0.65, blue: 0.10),
-                                        Color(red: 0.90, green: 0.50, blue: 0.0)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .fill(ZestPalette.ctaGradient)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -547,19 +612,20 @@ public struct ZestView: View {
     }
 
     private func categoryPill(_ cat: TransformCategory?, title: String) -> some View {
-        Button(action: { state.selectedCategory = cat }) {
+        let isSelected = state.selectedCategory == cat
+        return Button(action: { state.selectedCategory = cat }) {
             Text(title)
-                .font(.system(size: 10, weight: state.selectedCategory == cat ? .semibold : .regular))
-                .foregroundColor(state.selectedCategory == cat ? .white : .secondary)
+                .font(.system(size: 10, weight: isSelected ? .semibold : .regular))
+                .foregroundColor(isSelected ? .white : .secondary)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(state.selectedCategory == cat ? Color.accentColor : Color.primary.opacity(0.08))
+                        .fill(isSelected ? AnyShapeStyle(ZestPalette.ctaGradient) : AnyShapeStyle(Color.primary.opacity(0.08)))
                 )
                 .overlay(
                     Capsule()
-                        .strokeBorder(state.selectedCategory == cat ? Color.white.opacity(0.4) : Color.primary.opacity(0.12), lineWidth: 0.75)
+                        .strokeBorder(isSelected ? Color.white.opacity(0.4) : Color.primary.opacity(0.12), lineWidth: 0.75)
                 )
         }
         .buttonStyle(.plain)
@@ -582,21 +648,22 @@ public struct ZestView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     if let data = item.imageData {
+                        let hasTransformPreview = state.transformedPreview != nil
                         Button(action: {
                             state.transformedPreview = DataTransformer.imageBase64DataURI(pngData: data)
                         }) {
                             Text("Base64 Data URI")
                                 .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(state.transformedPreview != nil ? .white : .primary)
+                                .foregroundColor(hasTransformPreview ? .white : .primary)
                                 .padding(.horizontal, 9)
                                 .padding(.vertical, 4)
                                 .background(
                                     Capsule()
-                                        .fill(state.transformedPreview != nil ? Color.accentColor : Color.white.opacity(0.08))
+                                        .fill(hasTransformPreview ? AnyShapeStyle(ZestPalette.ctaGradient) : AnyShapeStyle(Color.white.opacity(0.08)))
                                 )
                                 .overlay(
                                     Capsule()
-                                        .strokeBorder(state.transformedPreview != nil ? Color.white.opacity(0.4) : Color.white.opacity(0.12), lineWidth: 0.75)
+                                        .strokeBorder(hasTransformPreview ? Color.white.opacity(0.4) : Color.white.opacity(0.12), lineWidth: 0.75)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -646,7 +713,7 @@ public struct ZestView: View {
                             state.transformedPreview = nil
                         }
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(ZestPalette.tang)
                         .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 12)
@@ -666,7 +733,7 @@ public struct ZestView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.75)
+                            .strokeBorder(ZestPalette.citrusGlow.opacity(0.24), lineWidth: 0.75)
                     )
                     .padding(.horizontal, 10)
                 }
@@ -780,16 +847,7 @@ public struct ZestView: View {
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 0.98, green: 0.65, blue: 0.10),
-                                        Color(red: 0.90, green: 0.50, blue: 0.0)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .fill(ZestPalette.ctaGradient)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 6, style: .continuous)
@@ -852,6 +910,10 @@ public struct ZestView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: 190)
                     .background(Color.black.opacity(0.2))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(ZestPalette.citrusGlow.opacity(0.22), lineWidth: 0.75)
+                    )
                     .cornerRadius(6)
                     .padding(.horizontal, 10)
                 } else {
@@ -877,6 +939,10 @@ public struct ZestView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 160, maxHeight: 210)
                 .background(Color.black.opacity(0.25))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(ZestPalette.citrusGlow.opacity(0.22), lineWidth: 0.75)
+                )
                 .cornerRadius(6)
                 .padding(.horizontal, 10)
             }
@@ -928,16 +994,7 @@ public struct ZestView: View {
                     .padding(.vertical, 5)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color(red: 0.98, green: 0.65, blue: 0.10),
-                                        Color(red: 0.90, green: 0.50, blue: 0.0)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                            .fill(ZestPalette.ctaGradient)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
@@ -1011,86 +1068,61 @@ public struct ZestView: View {
             // Right Utility Group (Uniform 22x22 circle buttons)
             HStack(spacing: 6) {
                 // Theme Toggle Button
-                Button(action: {
+                FooterCircleButton(
+                    systemName: currentTheme.iconName,
+                    isEmphasized: true,
+                    helpText: "Theme: \(currentTheme.title) (Click to switch)",
+                    accessibilityLabel: "Theme switcher, currently \(currentTheme.title)"
+                ) {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         toggleTheme()
                     }
-                }) {
-                    Image(systemName: currentTheme.iconName)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(Color.primary.opacity(0.07)))
-                        .overlay(Circle().strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.6))
                 }
-                .buttonStyle(.plain)
-                .help("Theme: \(currentTheme.title) (Click to switch)")
-                .accessibilityLabel("Theme switcher, currently \(currentTheme.title)")
 
                 // Screen Text OCR Button
-                Button(action: {
+                FooterCircleButton(
+                    systemName: "text.viewfinder",
+                    helpText: l10n.tr(.captureScreenText),
+                    accessibilityLabel: l10n.tr(.captureScreenText)
+                ) {
                     onDismiss()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                         Task {
                             await ScreenOCRService.shared.captureAndRecognize()
                         }
                     }
-                }) {
-                    Image(systemName: "text.viewfinder")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(Color.primary.opacity(0.07)))
-                        .overlay(Circle().strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.6))
                 }
-                .buttonStyle(.plain)
-                .help(l10n.tr(.captureScreenText))
-                .accessibilityLabel(l10n.tr(.captureScreenText))
 
                 // Shortcuts & Guide Button
-                Button(action: {
+                FooterCircleButton(
+                    systemName: "questionmark.circle.fill",
+                    helpText: "Keyboard Shortcuts & Guide",
+                    accessibilityLabel: "Keyboard Shortcuts and Guide"
+                ) {
                     onDismiss()
                     GuideWindowController.shared.showWindow()
-                }) {
-                    Image(systemName: "questionmark.circle.fill")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(Color.primary.opacity(0.07)))
-                        .overlay(Circle().strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.6))
                 }
-                .buttonStyle(.plain)
-                .help("Keyboard Shortcuts & Guide")
-                .accessibilityLabel("Keyboard Shortcuts and Guide")
 
                 // Preferences Button
-                Button(action: {
+                FooterCircleButton(
+                    systemName: "gearshape.fill",
+                    helpText: "Open Preferences (⌘,)",
+                    accessibilityLabel: "Preferences"
+                ) {
                     onDismiss()
                     SettingsWindowController.shared.showWindow()
-                }) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(Color.primary.opacity(0.07)))
-                        .overlay(Circle().strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.6))
                 }
-                .buttonStyle(.plain)
-                .help("Open Preferences (⌘,)")
-                .accessibilityLabel("Preferences")
 
                 // Quit Button
-                Button(action: { NSApplication.shared.terminate(nil) }) {
-                    Image(systemName: "power")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.secondary)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(Color.primary.opacity(0.07)))
-                        .overlay(Circle().strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.6))
+                FooterCircleButton(
+                    systemName: "power",
+                    iconSize: 10,
+                    iconWeight: .bold,
+                    helpText: l10n.tr(.quit),
+                    accessibilityLabel: l10n.tr(.quit)
+                ) {
+                    NSApplication.shared.terminate(nil)
                 }
-                .buttonStyle(.plain)
-                .help(l10n.tr(.quit))
-                .accessibilityLabel(l10n.tr(.quit))
             }
         }
         .padding(.horizontal, 12)
@@ -1129,13 +1161,7 @@ struct LiquidClipRow: View {
                         RoundedRectangle(cornerRadius: 4, style: .continuous)
                             .fill(
                                 activeHighlight
-                                ? AnyShapeStyle(
-                                    LinearGradient(
-                                        colors: [Color(red: 0.98, green: 0.65, blue: 0.10), Color(red: 0.90, green: 0.50, blue: 0.0)],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
+                                ? AnyShapeStyle(ZestPalette.ctaGradient)
                                 : AnyShapeStyle(badge.hasPrefix("⌥") ? Color.orange.opacity(0.15) : Color.primary.opacity(0.08))
                             )
                     )
@@ -1213,7 +1239,7 @@ struct LiquidClipRow: View {
                     Button(action: onOpenTransform) {
                         Image(systemName: item.isImage ? "eye" : "slider.horizontal.3")
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(ZestPalette.tang)
                             .frame(width: 20, height: 20)
                             .contentShape(Rectangle())
                     }
@@ -1264,13 +1290,21 @@ struct LiquidClipRow: View {
         .frame(height: 34)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(activeHighlight ? Color.primary.opacity(0.08) : Color.clear)
+                .fill(activeHighlight ? AnyShapeStyle(ZestPalette.activeRowWash) : AnyShapeStyle(Color.clear))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(activeHighlight ? Color.primary.opacity(0.12) : Color.clear, lineWidth: 0.75)
+                .strokeBorder(activeHighlight ? ZestPalette.tang.opacity(0.42) : Color.clear, lineWidth: 0.75)
         )
-        .shadow(color: activeHighlight ? Color.black.opacity(0.15) : Color.clear, radius: 5, y: 2)
+        .overlay(alignment: .leading) {
+            if activeHighlight {
+                Capsule()
+                    .fill(ZestPalette.ctaGradient)
+                    .frame(width: 2.5, height: 20)
+                    .padding(.leading, 2)
+            }
+        }
+        .shadow(color: activeHighlight ? ZestPalette.tang.opacity(0.14) : Color.clear, radius: 5, y: 2)
         .contentShape(Rectangle())
         .onTapGesture(perform: onPaste)
         .onHover { isHovered = $0 }
@@ -1299,6 +1333,49 @@ struct LiquidClipRow: View {
     }
 }
 
+// MARK: - Footer Utility Circle Button
+struct FooterCircleButton: View {
+    let systemName: String
+    var iconSize: CGFloat = 11
+    var iconWeight: Font.Weight = .medium
+    var isEmphasized: Bool = false
+    let helpText: String
+    let accessibilityLabel: String
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: iconSize, weight: iconWeight))
+                .foregroundColor((isHovered || isEmphasized) ? ZestPalette.tang : .secondary)
+                .frame(width: 22, height: 22)
+                .background(
+                    Circle()
+                        .fill(
+                            isHovered
+                            ? ZestPalette.tang.opacity(0.16)
+                            : (isEmphasized ? ZestPalette.tang.opacity(0.10) : Color.primary.opacity(0.07))
+                        )
+                )
+                .overlay(
+                    Circle()
+                        .strokeBorder(
+                            isHovered
+                            ? ZestPalette.tang.opacity(0.55)
+                            : (isEmphasized ? ZestPalette.tang.opacity(0.32) : Color.primary.opacity(0.14)),
+                            lineWidth: 0.6
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .help(helpText)
+        .accessibilityLabel(accessibilityLabel)
+    }
+}
+
 // MARK: - Prominent Frosted Glass Back Button
 struct BackButton: View {
     let action: () -> Void
@@ -1309,6 +1386,7 @@ struct BackButton: View {
             HStack(spacing: 5) {
                 Image(systemName: "chevron.backward")
                     .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(isHovered ? ZestPalette.tang : .primary)
                 Text("Back")
                     .font(.system(size: 11, weight: .semibold))
             }
@@ -1317,11 +1395,11 @@ struct BackButton: View {
             .padding(.vertical, 4)
             .background(
                 Capsule()
-                    .fill(Color.primary.opacity(isHovered ? 0.14 : 0.08))
+                    .fill(isHovered ? ZestPalette.tang.opacity(0.14) : Color.primary.opacity(0.08))
             )
             .overlay(
                 Capsule()
-                    .strokeBorder(Color.primary.opacity(isHovered ? 0.25 : 0.12), lineWidth: 0.75)
+                    .strokeBorder(isHovered ? ZestPalette.tang.opacity(0.45) : Color.primary.opacity(0.14), lineWidth: 0.75)
             )
             .contentShape(Capsule())
         }

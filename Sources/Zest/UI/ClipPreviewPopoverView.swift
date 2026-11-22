@@ -101,11 +101,26 @@ public struct ClipPreviewPopoverView: View {
 
                 Spacer()
 
-                Button("Paste") {
-                    onPaste()
+                Button(action: onPaste) {
+                    HStack(spacing: 4) {
+                        Text("Paste")
+                        Text("↵")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .fill(ZestPalette.ctaGradient)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.35), lineWidth: 0.75)
+                    )
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+                .buttonStyle(.plain)
             }
         }
         .padding(14)
@@ -114,7 +129,14 @@ public struct ClipPreviewPopoverView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                .stroke(
+                    LinearGradient(
+                        colors: [ZestPalette.citrusGlow.opacity(0.38), Color.white.opacity(0.14)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 1
+                )
         )
         .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 8)
     }
