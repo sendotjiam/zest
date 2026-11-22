@@ -41,12 +41,12 @@
 ## 🎬 See Zest in Action (25s Walkthrough)
 
 <div align="center">
-  <video src="assets/zest-promo.mp4" controls playsinline muted width="100%">
-    Watch the <a href="assets/zest-promo.mp4">25-second Zest walkthrough video</a>.
-  </video>
+  <a href="https://sendotjiam.me/zest#demo">
+    <img src="assets/zest-promo.gif" width="100%" alt="Zest 25s Walkthrough — 1-Tap Paste & Vision OCR" />
+  </a>
+  <br/>
+  <sub>Auto-playing preview • <a href="https://sendotjiam.me/zest#demo">Watch 1080p with audio</a> • <a href="assets/zest-promo.mp4">Download MP4</a></sub>
 </div>
-
-> ▶️ **[Watch `assets/zest-promo.mp4` (25s Walkthrough)](assets/zest-promo.mp4)** — Copy items in Safari, summon Zest with `⌘⇧V`, paste in 1 tap (`1`, `2`, `3`) without losing active cursor focus, and snip text from images with Vision OCR (`⌘⇧2`).
 
 ---
 
